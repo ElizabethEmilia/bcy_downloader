@@ -14,7 +14,20 @@ if [ -f $COOKIES_FILE ] ; then
     COOKIES=$(cat $COOKIES_FILE | tr -d '\n')
 fi
 
-filename_base=$(echo "$url"|grep -oEi "\d+")
+## download main page
+echo "Fetching information from $1"
+echo "Cookie: $COOKIES"
+r=$(curl "$url" -H "User-Agent: $USER_AGENT" -H "Cookie: $COOKIES")
+username=$(echo $r|grep -oE '<div class="user-name"><a class="cut" href=".*?" title=".*?">.*?</a></div>'|grep -oEi 'title=".*?"'|grep -oEi '".*?"'|tr -d '"'|head -1)
+album_id=$(echo "$url"|grep -oEi "\d+")
+filename_base="$username/$album_id"
+
+echo "User Name: $username"
+echo "Saving to: $filename_base"
+
+#download pictures
+index=1
+
 if [ -d $filename_base ] ; then
     ans=""
     while [ ! "$ans" = y ] && [ ! "$ans" = Y ] && [ ! "$ans" = n ] && [ ! "$ans" = N ] ;
@@ -30,14 +43,6 @@ if [ -d $filename_base ] ; then
     fi
 fi
 
-## download main page
-echo "Fetching information from $1"
-echo "Cookie: $COOKIES"
-r=$(curl "$url" -H "User-Agent: $USER_AGENT" -H "Cookie: $COOKIES")
-echo $r>out.txt
-
-#download pictures
-index=1
 mkdir -p "$filename_base"
 
 download_from_list() {
