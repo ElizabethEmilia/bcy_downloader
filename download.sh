@@ -7,6 +7,11 @@ if [ ! $# -eq 1 ] ; then
     exit 1
 fi
 
+if [ $(id -u) -eq 0 ] ; then
+    echo "Do not run this application as root."
+    exit 9
+fi
+
 r=""
 fetch_content() {
     url=$1
@@ -21,6 +26,10 @@ fetch_content() {
     echo "Fetching information from $1"
     echo "Cookie: $COOKIES"
     r=$(curl "$url" -H "User-Agent: $USER_AGENT" -H "Cookie: $COOKIES")
+    if [ ! $? -eq 0 ] ; then
+        echo "Aborted. Couldn't fetch content from $url";
+        exit 7
+    fi
 }
 
 download_from_list() {
@@ -45,7 +54,7 @@ download_album() {
 
     username=$(echo $r|grep -oE '<div class="user-name"><a class="cut" href=".*?" title=".*?">.*?</a></div>'|grep -oEi 'title=".*?"'|grep -oEi '".*?"'|tr -d '"'|head -1)
     album_id=$(echo "$url"|grep -oEi "\d+")
-    filename_base="$username/$album_id"
+    filename_base="./$username/$album_id"
     echo "User Name: $username"
     echo "Saving to: $filename_base"
 
@@ -58,7 +67,7 @@ download_album() {
         done
 
         if [ "$ans" = y ] || [ "$ans" = Y ] ; then
-            rm -rf "./$filename_base"
+            rm -rf "$filename_base"
         else
             return 0
         fi
@@ -135,6 +144,6 @@ if [ $? -eq 0 ] ; then
 fi
 #   - otherwise
 if [ $IS_DOWNLOADABLE -eq 0 ] ; then
-    echo "Unable to download. The url `$URL` is neither a coser mainpage, nor an album page."
+    echo "Unable to download. The url is neither a coser mainpage, nor an album page."
     exit 5
 fi
