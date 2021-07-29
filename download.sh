@@ -82,7 +82,7 @@ download_album() {
     download_from_list "$image_list"
     ##   - try with pattern 2
     if [ $index -eq 1 ] ; then
-        image_list=$(echo $r|grep -oEi "https.*?noop\.image"|grep -oEi "mid.*?noop\.image"|grep -oEi "https.*?noop\.image")
+        image_list=$(echo $r|grep -oEi "https.*?noop\.image"|grep -oEi "original_path.*?noop\.image"|grep -oEi "https.*?noop\.image")
         n_images=$(echo "$image_list"|wc -l|tr -d '\t'|tr -d " "|bc)
         download_from_list "$image_list"
     fi
