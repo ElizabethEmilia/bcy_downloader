@@ -48,27 +48,27 @@ process_flag() {
         echo "$program_name: expected an argument for : $prefix$flag"
     fi
 
-    flag=$1
+    flag="-$1"
     current_proc_flag=$1
     require_a_positional_arg=0
     #echo "Processing: "$flag
-    if [ $flag == 'n' ] ; then
+    if [ $flag == '-n' ] ; then
         has_n_flag=1
         return 0
-    elif [ $flag == 'y' ] || [ $flag == 'f' ] || [ $flag == 'force' ]; then
+    elif [ $flag == '-y' ] || [ $flag == '-f' ] || [ $flag == '-force' ]; then
         has_y_flag=1
         return 0
-    elif [ $flag == 'v' ] || [ $flag == 'version' ] ; then
+    elif [ $flag == '-v' ] || [ $flag == '-version' ] ; then
         print_version
         exit 0
-    elif [ $flag == 'h' ] || [ $flag == 'help' ]; then
+    elif [ $flag == '-h' ] || [ $flag == '-help' ]; then
         print_help
         exit 0
     else
-        if [ ${#flag} -eq 1 ] ; then 
-            prefix='-'
+        if [ ${#flag} -eq 2 ] ; then 
+            prefix=''
         else 
-            prefix='--'
+            prefix='-'
         fi
         echo "$program_name: unexpected argument: $prefix$flag"
         print_simple_help
@@ -271,6 +271,6 @@ if [ $? -eq 0 ] ; then
 fi
 #   - otherwise
 if [ $IS_DOWNLOADABLE -eq 0 ] ; then
-    echo "Unable to download. The url is neither a coser mainpage, nor an album page."
+    echo "$program_name: unable to download. The url is neither a coser mainpage, nor an album page."
     exit 5
 fi
