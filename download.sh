@@ -1,9 +1,127 @@
-if [ ! $# -eq 1 ] ; then
-    echo "usage: $0 <url>"
-    echo ""
-    echo "Note: the url is the album URL or coser homepage url."
-    echo "    album url denotes to a single album (i.e., https://bcy.net/item/detail/6978776749035232294)"
-    echo "    coser homepage url denotes to the homepage of a coser, containers multiply albums (i.e., https://bcy.net/u/2437640)"
+#!/usr/bin/env bash
+
+has_n_flag=0
+has_y_flag=0
+
+program_path=$0
+program_name=$0
+program_name=${program_name##*/}
+
+ARG_LIST='[-fhnvy] url'
+
+print_simple_help() {
+    echo 'usage: '$program_name' '$ARG_LIST'
+type "'$program_path' --help" for more information'
+}
+
+print_help() {
+    echo 'usage: '$program_name' '$ARG_LIST'
+
+Positional Arguments:
+    url               The ALBUM URL or COSER HOMEPAGE URL
+                      ALBUM URL denotes to a single album (i.e., https://bcy.net/item/detail/6978776749035232294)
+                      COSER HOMEPAGE URL denotes to the homepage of a coser, containes multiply albums (i.e., https://bcy.net/u/2437640)
+
+Arguments:
+    -f    --force     Force re-download if the album already exists without prompt
+    -h    --help      Print this help message and exit
+    -n                Do not re-download if the album already exists without prompt
+    -v    --version   Print version and license and exit
+    -y                An alias for -f
+   '
+}
+
+print_version() {
+    echo 'Version: 1.0.0'
+    echo 'REPOSITORY: https://github.com/ElizabethEmilia/bcy_downloader'
+    echo 'Licensed under GNU General Public License (Version 3)'
+}
+
+require_a_positional_arg=0
+current_proc_flag=
+
+process_flag() {
+    if [ $require_a_positional_arg -eq 1 ]; then
+        if [ ${#current_proc_flag} -eq 1 ] ; then prefix='-'; else prefix='--'; fi
+        echo "$program_name: expected an argument for : $prefix$flag"
+    fi
+
+    flag=$1
+    current_proc_flag=$1
+    require_a_positional_arg=0
+    #echo "Processing: "$flag
+    if [ $flag == 'n' ] ; then
+        has_n_flag=1
+        return 0
+    elif [ $flag == 'y' ] || [ $flag == 'f' ] || [ $flag == 'force' ]; then
+        has_y_flag=1
+        return 0
+    elif [ $flag == 'v' ] || [ $flag == 'version' ] ; then
+        print_version
+        exit 0
+    elif [ $flag == 'h' ] || [ $flag == 'help' ]; then
+        print_help
+        exit 0
+    else
+        if [ ${#flag} -eq 1 ] ; then 
+            prefix='-'
+        else 
+            prefix='--'
+        fi
+        echo "$program_name: unexpected argument: $prefix$flag"
+        print_simple_help
+        exit 1
+    fi
+}
+
+process_flag_with_arg() {
+    flag=$current_proc_flag
+    arg=$1
+
+    # process augumented flag
+    # if [ $flag == 'xxx' ]; then ARG_FOR_XXX=$arg ; fi
+}
+
+process_positional_args() {
+    index=$1
+    arg=$2
+    if [ $require_a_positional_arg -eq 1 ]; then
+        process_flag_with_arg "$arg"
+        return 0
+    fi
+    if [ $index -eq 0 ] ; then
+        url="$arg"
+    else
+        echo "$program_name: unexpected positional argument: '$arg'"
+        print_simple_help
+        exit 1
+    fi
+}
+
+pos_arg_index=0
+for s in "$@" ; do
+    if [ ${s:0:1} == '-' ] ; then
+        # is flag
+        if [ ! ${s:1:1} == '-' ] ; then
+            # if is single flag
+            slen=${#s}
+            for i in $(seq 1 $(($slen-1))) ; do
+                process_flag ${s:$i:1}
+            done
+        else
+            # if is word flag
+            process_flag ${s:2}
+        fi
+    else
+        process_positional_args $pos_arg_index $s
+        if [ $require_a_positional_arg -eq 0 ]; then
+            pos_arg_index=$((pos_arg_index+1))
+        fi
+    fi
+done
+if [ $pos_arg_index -eq 0 ]; then
+    echo "$program_name: missing required positional argument: url"
+    print_simple_help
     exit 1
 fi
 
@@ -37,6 +155,7 @@ download_from_list() {
     for image in $img_list
     do 
         image=$(sed "s/\\\\u002F/\\//g" <<< "$image")
+        image=$(echo "$image"|tr -d '\\')
         save_to="$filename_base/$index.jpg"
         echo "Downloading image($index/$n_images): $image"
         echo "Save to: $save_to"
@@ -60,6 +179,12 @@ download_album() {
 
     if [ -d $filename_base ] ; then
         ans=""
+        if [ $has_n_flag -eq 1 ]; then
+            ans="n"
+            echo "Album $filename_base already exists."
+        elif [ $has_y_flag -eq 1 ]; then
+            ans="y"
+        fi
         while [ ! "$ans" = y ] && [ ! "$ans" = Y ] && [ ! "$ans" = n ] && [ ! "$ans" = N ] ;
         do
             printf "Album $filename_base already exists, redownload? (y/n):"
@@ -118,7 +243,7 @@ download_coser() {
     return $ret
 }
 
-URL="$1"
+URL="$url"
 IS_DOWNLOADABLE=0
 # check whether is album url or coser url
 #   - if is album url
