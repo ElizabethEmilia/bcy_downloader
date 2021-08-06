@@ -18,9 +18,11 @@ print_help() {
     echo 'usage: '$program_name' '$ARG_LIST'
 
 Positional Arguments:
-    url               The ALBUM URL or COSER HOMEPAGE URL
-                      ALBUM URL denotes to a single album (i.e., https://bcy.net/item/detail/6978776749035232294)
-                      COSER HOMEPAGE URL denotes to the homepage of a coser, containes multiply albums (i.e., https://bcy.net/u/2437640)
+    url               An ALBUM URL or a COSER HOMEPAGE URL
+                      ALBUM URL denotes to a single album 
+                           (i.e., https://bcy.net/item/detail/6978776749035232294)
+                      COSER HOMEPAGE URL denotes to the homepage of a coser, 
+                           containes multiply albums (i.e., https://bcy.net/u/2437640)
 
 Arguments:
     -f    --force     Force re-download if the album already exists without prompt
