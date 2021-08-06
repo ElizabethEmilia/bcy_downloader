@@ -278,7 +278,7 @@ if [ $? -eq 0 ] ; then
     if [ $ret -eq 0 ] ; then
         echo "Not all album download completed!"
     fi
-    exit $ret
+    exit $((1-$ret))
 fi
 #   - otherwise
 if [ $IS_DOWNLOADABLE -eq 0 ] ; then
