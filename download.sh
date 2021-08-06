@@ -9,6 +9,17 @@ program_name=${program_name##*/}
 
 ARG_LIST='[-fhnvy] url'
 
+if [ "$(uname)" = "Darwin" ] ; then
+    # running on macos
+    GREP="grep -oEi"
+elif [ "$(uname)" = "Linux" ] ; then
+    # running on Linux
+    GREP="grep -oPi"
+else
+    # otherwise
+    GREP="grep -oPi"
+fi
+
 print_simple_help() {
     echo 'usage: '$program_name' '$ARG_LIST'
 type "'$program_path' --help" for more information'
@@ -173,8 +184,8 @@ download_album() {
     #download pictures
     index=1
 
-    username=$(echo $r|grep -oE '<div class="user-name"><a class="cut" href=".*?" title=".*?">.*?</a></div>'|grep -oEi 'title=".*?"'|grep -oEi '".*?"'|tr -d '"'|head -1)
-    album_id=$(echo "$url"|grep -oEi "\d+")
+    username=$(echo $r|grep -oE '<div class="user-name"><a class="cut" href=".*?" title=".*?">.*?</a></div>'|$GREP 'title=".*?"'|$GREP '".*?"'|tr -d '"'|head -1)
+    album_id=$(echo "$url"|$GREP "\d+")
     filename_base="./$username/$album_id"
     echo "User Name: $username"
     echo "Saving to: $filename_base"
@@ -204,12 +215,12 @@ download_album() {
 
     ## parsing image list
     ##   - try with pattern 1
-    image_list=$(echo $r|grep -oEi "https:\\\\.*?%3D"|grep -oEi "ratio.*?%3D"|grep -oEi "https:\\\\.*?%3D")
+    image_list=$(echo $r|$GREP "https:\\\\.*?%3D"|$GREP "ratio.*?%3D"|$GREP "https:\\\\.*?%3D")
     n_images=$(echo "$image_list"|wc -l|tr -d '\t'|tr -d " "|bc)
     download_from_list "$image_list"
     ##   - try with pattern 2
     if [ $index -eq 1 ] ; then
-        image_list=$(echo $r|grep -oEi "https.*?noop\.image"|grep -oEi "original_path.*?noop\.image"|grep -oEi "https.*?noop\.image")
+        image_list=$(echo $r|$GREP "https.*?noop\.image"|$GREP "original_path.*?noop\.image"|$GREP "https.*?noop\.image")
         n_images=$(echo "$image_list"|wc -l|tr -d '\t'|tr -d " "|bc)
         download_from_list "$image_list"
     fi
@@ -228,7 +239,7 @@ download_coser() {
     fetch_content "$1"
     ret=1
     # get album list
-    album_list=$(echo "$r"|grep -oEi '\\"item_id\\":\\".*?\\"'|grep -oEi "\d+")
+    album_list=$(echo "$r"|$GREP '\\"item_id\\":\\".*?\\"'|$GREP "\d+")
     n_albums=$(echo "$album_list"|wc -l|tr -d '\t'|tr -d " "|bc)
     echo "Found $n_albums albums"
     album_i=1
