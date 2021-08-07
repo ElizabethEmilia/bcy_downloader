@@ -7,7 +7,10 @@ program_path=$0
 program_name=$0
 program_name=${program_name##*/}
 
-ARG_LIST='[-fhnvy] url'
+SAVE_AS_NAME=''
+LN_NAME=''
+
+ARG_LIST='[-fhnvy] [--name name] [--ln name] url'
 
 if [ "$(uname)" = "Darwin" ] ; then
     # running on macos
@@ -34,14 +37,16 @@ Positional Arguments:
                            (i.e., https://bcy.net/item/detail/6978776749035232294)
                       COSER HOMEPAGE URL denotes to the homepage of a coser, 
                            containes multiply albums (i.e., https://bcy.net/u/2437640)
-
 Arguments:
-    -f    --force     Force re-download if the album already exists without prompt
-    -h    --help      Print this help message and exit
+    -f, --force       Force re-download if the album already exists without prompt
+    -h, --help        Print this help message and exit
     -n                Do not re-download if the album already exists without prompt
-    -v    --version   Print version and license and exit
-    -y                An alias for -f
-   '
+        --name <name> Specify a name of directory name instead of using album ID as 
+                      directory name
+        --ln <name>   Specify a name of directory, which is linked to the original 
+                      album directory
+    -v, --version     Print version and license and exit
+    -y                An alias for -f'
 }
 
 print_version() {
@@ -53,28 +58,33 @@ print_version() {
 require_a_positional_arg=0
 current_proc_flag=
 
-process_flag() {
+check_pos_arg() {
     if [ $require_a_positional_arg -eq 1 ]; then
-        if [ ${#current_proc_flag} -eq 1 ] ; then prefix='-'; else prefix='--'; fi
+        if [ ${#current_proc_flag} -eq 1 ] ; then prefix=''; else prefix='-'; fi
         echo "$program_name: expected an argument for : $prefix$flag"
+        print_simple_help
+        exit 8
     fi
+}
+
+process_flag() {
+    check_pos_arg
 
     flag="-$1"
-    current_proc_flag=$1
-    require_a_positional_arg=0
+    current_proc_flag=$flag
     #echo "Processing: "$flag
     if [ $flag == '-n' ] ; then
         has_n_flag=1
-        return 0
     elif [ $flag == '-y' ] || [ $flag == '-f' ] || [ $flag == '-force' ]; then
         has_y_flag=1
-        return 0
     elif [ $flag == '-v' ] || [ $flag == '-version' ] ; then
         print_version
         exit 0
     elif [ $flag == '-h' ] || [ $flag == '-help' ]; then
         print_help
         exit 0
+    elif [ $flag == '-name' ] || [ $flag == '-ln' ]; then
+        require_a_positional_arg=1
     else
         if [ ${#flag} -eq 2 ] ; then 
             prefix=''
@@ -93,6 +103,12 @@ process_flag_with_arg() {
 
     # process augumented flag
     # if [ $flag == 'xxx' ]; then ARG_FOR_XXX=$arg ; fi
+    if [ $flag == '-name' ]; then 
+        SAVE_AS_NAME=$(tr -d '/' <<<"$arg" | tr -d '.')
+    elif [ $flag == '-ln' ]; then
+        LN_NAME=$(tr -d '/' <<<"$arg" | tr -d '.')
+    fi
+    require_a_positional_arg=0
 }
 
 process_positional_args() {
@@ -132,6 +148,9 @@ for s in "$@" ; do
         fi
     fi
 done
+
+check_pos_arg
+
 if [ $pos_arg_index -eq 0 ]; then
     echo "$program_name: missing required positional argument: url"
     print_simple_help
@@ -186,6 +205,9 @@ download_album() {
 
     username=$(echo $r|grep -oE '<div class="user-name"><a class="cut" href=".*?" title=".*?">.*?</a></div>'|$GREP 'title=".*?"'|$GREP '".*?"'|tr -d '"'|head -1)
     album_id=$(echo "$url"|$GREP "\d+")
+    if [ ! "$SAVE_AS_NAME" = "" ] ; then
+        album_id="$SAVE_AS_NAME"
+    fi
     filename_base="./$username/$album_id"
     echo "User Name: $username"
     echo "Saving to: $filename_base"
@@ -212,6 +234,11 @@ download_album() {
     fi
 
     mkdir -p "$filename_base"
+    if [ ! "$LN_NAME" = '' ]; then
+        rm -f "./$username/$LN_NAME"
+        ln -s "./$album_id" "./$username/$LN_NAME"
+        echo "Linking: ./$username/$LN_NAME to $filename_base"
+    fi
 
     ## parsing image list
     ##   - try with pattern 1
