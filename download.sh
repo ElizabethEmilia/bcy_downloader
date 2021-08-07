@@ -142,8 +142,9 @@ for s in "$@" ; do
             process_flag ${s:2}
         fi
     else
+        req=$require_a_positional_arg
         process_positional_args $pos_arg_index $s
-        if [ $require_a_positional_arg -eq 0 ]; then
+        if [ $req -eq 0 ]; then
             pos_arg_index=$((pos_arg_index+1))
         fi
     fi
@@ -284,6 +285,7 @@ download_coser() {
 }
 
 URL="$url"
+echo "url: $URL"
 IS_DOWNLOADABLE=0
 # check whether is album url or coser url
 #   - if is album url
