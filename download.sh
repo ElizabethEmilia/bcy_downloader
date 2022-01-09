@@ -243,12 +243,14 @@ download_album() {
 
     ## parsing image list
     ##   - try with pattern 1
-    image_list=$(echo $r|$GREP "https:\\\\.*?%3D"|$GREP "ratio.*?%3D"|$GREP "https:\\\\.*?%3D")
-    n_images=$(echo "$image_list"|wc -l|tr -d '\t'|tr -d " "|bc)
-    download_from_list "$image_list"
+    # image_list=$(echo $r|$GREP "https:\\\\.*?%3D"|$GREP "ratio.*?%3D"|$GREP "https:\\\\.*?%3D")
+    # n_images=$(echo "$image_list"|wc -l|tr -d '\t'|tr -d " "|bc)
+    # download_from_list "$image_list"
     ##   - try with pattern 2
     if [ $index -eq 1 ] ; then
-        image_list=$(echo $r|$GREP "https.*?noop\.image"|$GREP "original_path.*?noop\.image"|$GREP "https.*?noop\.image")
+        # This url reports 404 forbidden 
+        #image_list=$(echo $r|$GREP "https.*?noop\.image"|$GREP "original_path.*?noop\.image"|$GREP "https.*?noop\.image")
+        image_list=$(echo $r|$GREP "https.*?v1.*?\.image.*?\""|$GREP "origin.*?v1.*?\.image.*"|$GREP "ratio.*?v1.*?\.image.*"|$GREP "origin.*?v1.*?\.image.*"|$GREP "https.*?\.image.*"|sed 's/\\\"//')
         n_images=$(echo "$image_list"|wc -l|tr -d '\t'|tr -d " "|bc)
         download_from_list "$image_list"
     fi
